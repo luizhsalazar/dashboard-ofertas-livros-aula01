@@ -5,11 +5,64 @@ import streamlit as st
 
 import dados
 
+def montar_tabela(livros):
+    tabela = []
+    for livro in livros:
+        linha = {
+            "Título": livro["titulo"],
+            "Categoria": livro["categoria"],
+            "Nota": livro["nota"] * "⭐",
+            "Preço": f"£ {livro["preco"]:.2f}",
+            "Faixa": classificar_preco(livro["preco"])
+        }
+        tabela.append(linha)
+    return tabela
+
+def classificar_preco(preco):
+    if preco < 20:
+        return "Barato"
+    elif preco <= 40:
+        return "Médio"
+    else:
+        return "Caro"
+
+def contar_por_faixa_dict(livros):
+    contagem = {}
+    for livro in livros:
+        faixa = classificar_preco(livro["preco"])
+        # if faixa in contagem:
+        #     contagem[faixa] = contagem[faixa] + 1
+        # else:
+        #     contagem[faixa] = 1
+
+        contagem[faixa] = contagem[faixa] + 1 if faixa in contagem else 1
+
+    return contagem
+
+def contar_por_faixa(livros):
+    conta_caros = 0
+    conta_medio = 0
+    conta_baratos = 0
+    for livro in livros:
+        if classificar_preco(livro["preco"]) == "Barato":
+            conta_baratos += 1
+        elif classificar_preco(livro["preco"]) == "Médio":
+            conta_medio += 1
+        else:
+            conta_caros += 1
+
+    return conta_baratos, conta_medio, conta_caros
+
+
 def main():
     st.set_page_config(page_title="Dashboard de Livros", page_icon="📚", layout="wide")
     st.title("📚 Dashboard de Livros")
 
-    livros = dados.ler_livros()
+    # livros_originais = dados.ler_livros()
+    # livros = dados.preparar_livros(livros_originais)
+
+    livros = dados.carregar_livros()
+    tabela = montar_tabela(livros)
 
     col1, col2, col3, col4 = st.columns(4)
     qtd_livros = len(livros)
@@ -22,11 +75,15 @@ def main():
     col3.metric("Qtd. livros 5 Estrelas", cinco_estrelas)
 
     mais_caro = dados.encontrar_mais_caro(livros)
-    col4.metric("Livro mais caro", mais_caro["preco"])
+    col4.metric("Livro mais caro", f"£{mais_caro["preco"]}")
     col4.caption(mais_caro["titulo"])
 
-    st.dataframe(livros)
+    st.dataframe(tabela)
 
 
 if __name__ == "__main__":
     main()
+
+    # livros = dados.carregar_livros()
+    # conta_caros, contar_baratos, contar_medio = contar_por_faixa(livros)
+    # print(contar_por_faixa_dict(livros))
